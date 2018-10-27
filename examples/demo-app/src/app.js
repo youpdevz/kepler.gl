@@ -25,7 +25,7 @@ import {connect} from 'react-redux';
 import Banner from './components/banner';
 import Announcement from './components/announcement';
 
-import {loadSampleConfigurations} from './actions';
+import {initApp, loadSampleConfigurations, propagateStorageEvent, setAuthToken, exportFileToCloud} from './actions';
 import {replaceLoadDataModal} from './factories/load-data-modal';
 
 const KeplerGl = require('kepler.gl/components').injectComponents([
@@ -43,6 +43,9 @@ import sampleIconCsv, {config as savedMapConfig} from './data/sample-icon-csv';
 import {updateVisData, addDataToMap} from 'kepler.gl/actions';
 import Processors from 'kepler.gl/processors';
 /* eslint-enable no-unused-vars */
+
+import ModalDialog from 'kepler.gl/components/common/modal';
+import CloudStorage from './components/cloud-storage';
 
 const BannerHeight = 30;
 const BannerKey = 'kgHideBanner-iiba';
@@ -70,11 +73,22 @@ class App extends Component {
   };
 
   componentWillMount() {
+    this.props.dispatch(initApp());
     // if we pass an id as part of the url
     // we ry to fetch along map configurations
     const {params: {id: sampleMapId} = {}} = this.props;
     this.props.dispatch(loadSampleConfigurations(sampleMapId));
+
+    // event listeners
     window.addEventListener('resize', this._onResize);
+    if (localStorage) {
+      window.addEventListener('storage', event => {
+        if (event.storageArea === localStorage) {
+          this.props.dispatch(propagateStorageEvent())
+        }
+      }, false);
+    }
+
     this._onResize();
   }
 
@@ -82,6 +96,11 @@ class App extends Component {
     // delay 2s to show the banner
     if (!window.localStorage.getItem(BannerKey)) {
       window.setTimeout(this._showBanner, 3000);
+    }
+    // detect auth
+    // TODO: this should be a constant
+    if (this.props.location.pathname === '/auth') {
+      this.props.dispatch(setAuthToken())
     }
     // load sample data
     // this._loadSampleData();
@@ -185,8 +204,19 @@ class App extends Component {
     );
   }
 
+  _toggleCloudModal = () => {
+    this.setState({
+      cloudModalOpen: !this.state.cloudModalOpen
+    });
+  };
+
+  _onExportToDropbox = () => {
+    this.props.dispatch(exportFileToCloud('dropbox'))
+  };
+
   render() {
     const {showBanner, width, height} = this.state;
+    const {app: {authTokens}} = this.props.demo;
     return (
       <GlobalStyleDiv>
         <Banner
@@ -197,6 +227,19 @@ class App extends Component {
         >
           <Announcement onDisable={this._disableBanner}/>
         </Banner>
+        <div>
+          <ModalDialog
+            isOpen={Boolean(this.state.cloudModalOpen)}
+            close={this._toggleCloudModal}
+            >
+            <div>
+              <CloudStorage
+                authTokens={authTokens}
+                onExportToDropbox={this._onExportToDropbox}
+              />
+            </div>
+          </ModalDialog>
+        </div>
         <div
           style={{
             transition: 'margin 1s, height 1s',
@@ -216,6 +259,7 @@ class App extends Component {
             getState={state => state.demo.keplerGl}
             width={width}
             height={height - (showBanner ? BannerHeight : 0)}
+            onSaveMap={this._toggleCloudModal}
           />
         </div>
       </GlobalStyleDiv>

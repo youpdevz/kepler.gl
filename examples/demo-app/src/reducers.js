@@ -30,10 +30,12 @@ import {
   SET_LOADING_METHOD,
   LOAD_MAP_SAMPLE_FILE,
   LOAD_REMOTE_FILE_DATA_SUCCESS,
-  SET_SAMPLE_LOADING_STATUS
+  SET_SAMPLE_LOADING_STATUS, SET_AUTH_TOKEN, PROPAGATE_STORAGE_EVENT
 } from './actions';
 
 import {DEFAULT_LOADING_METHOD, LOADING_METHODS} from './constants/default-settings';
+import {retrieveAuthToken, validateAndStoreAuth} from './utils/utils';
+import DropboxHandler from './utils/dropbox';
 
 // INITIAL_APP_STATE
 const initialAppState = {
@@ -43,14 +45,27 @@ const initialAppState = {
   currentOption: DEFAULT_LOADING_METHOD.options[0],
   previousMethod: null,
   sampleMaps: [], // this is used to store sample maps fetch from a remote json file
-  isMapLoading: false // determine whether we are loading a sample map
+  isMapLoading: false, // determine whether we are loading a sample map,
+  authTokens: {
+    // dropbox: '12345'
+  }
 };
+
+// Read auth tokens from localStorage
+function readAuthTokens() {
+  // we can add multiple handlers
+  return [DropboxHandler].reduce((tokens, handler) => ({
+    ...tokens,
+    [handler.name]: retrieveAuthToken(DropboxHandler)
+  }), {});
+}
 
 // App reducer
 export const appReducer = handleActions({
-  [INIT]: (state, action) => ({
+  [INIT]: (state) => ({
     ...state,
-    loaded: true
+    loaded: true,
+    authTokens: readAuthTokens()
   }),
   [SET_LOADING_METHOD]: (state, action) => ({
     ...state,
@@ -64,7 +79,31 @@ export const appReducer = handleActions({
   [SET_SAMPLE_LOADING_STATUS]: (state, action) => ({
     ...state,
     isMapLoading: action.isMapLoading
-  })
+  }),
+  [SET_AUTH_TOKEN]: (state) => {
+    let token = validateAndStoreAuth(DropboxHandler);
+
+    if (!token) {
+      // TODO: show error
+      return {
+        ...state,
+        error: 'AUTHENTICATION FAILED'
+      }
+    }
+    return {
+      ...state,
+      authTokens: {
+        ...state.authTokens,
+        [DropboxHandler.name]: token
+      }
+    };
+  },
+  [PROPAGATE_STORAGE_EVENT]: (state) => {
+    return {
+      ...state,
+      authTokens: readAuthTokens()
+    };
+  }
 }, initialAppState);
 
 // combine app reducer and keplerGl reducer

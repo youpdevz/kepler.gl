@@ -21,14 +21,14 @@
 import React from 'react';
 import document from 'global/document';
 import {Provider} from 'react-redux';
-import {hashHistory, Router, Route} from 'react-router';
+import {browserHistory, Router, Route, } from 'react-router';
 import {syncHistoryWithStore} from 'react-router-redux';
 import {render} from 'react-dom';
 import store from './store';
 import App from './app';
 // import {getAppUrlPrefix} from './constants/default-settings';
 
-const history = syncHistoryWithStore(hashHistory, store);
+const history = syncHistoryWithStore(browserHistory, store);
 // const prefix = getAppUrlPrefix();
 // const path = prefix === '' ? '(:id)' : `${prefix}(/:id)`;
 
@@ -37,6 +37,11 @@ const Root = () => (
     <Router history={history}>
       <Route path="/(:id)" component={App} />
       <Route path="/demo/(:id)" component={App} />
+      {/*
+      For Auth we could use a different component because we only need to update
+      the locale storage
+      */}
+      <Route path="/auth" component={App}/>
     </Router>
   </Provider>
 );
