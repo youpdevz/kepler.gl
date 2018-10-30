@@ -30,7 +30,7 @@ import {
   SET_LOADING_METHOD,
   LOAD_MAP_SAMPLE_FILE,
   LOAD_REMOTE_FILE_DATA_SUCCESS,
-  SET_SAMPLE_LOADING_STATUS, SET_AUTH_TOKEN, PROPAGATE_STORAGE_EVENT
+  SET_SAMPLE_LOADING_STATUS, SET_AUTH_TOKEN, PROPAGATE_STORAGE_EVENT, PUSHING_FILE
 } from './actions';
 
 import {DEFAULT_LOADING_METHOD, LOADING_METHODS} from './constants/default-settings';
@@ -46,9 +46,6 @@ const initialAppState = {
   previousMethod: null,
   sampleMaps: [], // this is used to store sample maps fetch from a remote json file
   isMapLoading: false, // determine whether we are loading a sample map,
-  authTokens: {
-    // dropbox: '12345'
-  }
 };
 
 // Read auth tokens from localStorage
@@ -64,8 +61,7 @@ function readAuthTokens() {
 export const appReducer = handleActions({
   [INIT]: (state) => ({
     ...state,
-    loaded: true,
-    authTokens: readAuthTokens()
+    loaded: true
   }),
   [SET_LOADING_METHOD]: (state, action) => ({
     ...state,
@@ -79,8 +75,25 @@ export const appReducer = handleActions({
   [SET_SAMPLE_LOADING_STATUS]: (state, action) => ({
     ...state,
     isMapLoading: action.isMapLoading
+  })
+}, initialAppState);
+
+const sharingInitialState = {
+  authTokens: {
+    // dropbox: '12345'
+  },
+  isLoading: false,
+  status: null,
+  metadata: null
+};
+
+// file upload reducer
+export const sharingReducer = handleActions({
+  [INIT]: (state) => ({
+    ...state,
+    authTokens: readAuthTokens()
   }),
-  [SET_AUTH_TOKEN]: (state) => {
+  [SET_AUTH_TOKEN]: state => {
     let token = validateAndStoreAuth(DropboxHandler);
 
     if (!token) {
@@ -98,20 +111,24 @@ export const appReducer = handleActions({
       }
     };
   },
-  [PROPAGATE_STORAGE_EVENT]: (state) => {
-    return {
-      ...state,
-      authTokens: readAuthTokens()
-    };
-  }
-}, initialAppState);
+  [PROPAGATE_STORAGE_EVENT]: state => ({
+    ...state,
+    authTokens: readAuthTokens()
+  }),
+  [PUSHING_FILE]: (state, action) => ({
+    ...state,
+    status: action.status,
+    metadata: action.metadata
+  })
+}, sharingInitialState);
 
 // combine app reducer and keplerGl reducer
 // to mimic the reducer state of kepler.gl website
 const demoReducer = combineReducers({
   // mount keplerGl reducer
   keplerGl: keplerGlReducer,
-  app: appReducer
+  app: appReducer,
+  sharing: sharingReducer
 });
 
 // this can be moved into a action and call kepler.gl action
