@@ -84,7 +84,7 @@ const sharingInitialState = {
   },
   isLoading: false,
   status: null,
-  metadata: null
+  info: null
 };
 
 // file upload reducer
@@ -117,8 +117,8 @@ export const sharingReducer = handleActions({
   }),
   [PUSHING_FILE]: (state, action) => ({
     ...state,
-    status: action.status,
-    metadata: action.metadata
+    isLoading: action.isLoading,
+    info: action.metadata
   })
 }, sharingInitialState);
 

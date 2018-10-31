@@ -241,7 +241,7 @@ class App extends Component {
               <CloudStorage
                 authTokens={sharing.authTokens}
                 isLoading={sharing.isLoading}
-                metadata={sharing.metadata}
+                info={sharing.info}
                 onExportToDropbox={this._onExportToDropbox}
               />
             </div>
