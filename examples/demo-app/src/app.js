@@ -98,11 +98,7 @@ class App extends Component {
     if (!window.localStorage.getItem(BannerKey)) {
       window.setTimeout(this._showBanner, 3000);
     }
-    // detect auth
-    // TODO: this should be a constant
-    if (this.props.location.pathname === '/auth') {
-      this.props.dispatch(setAuthToken())
-    }
+
     // load sample data
     // this._loadSampleData();
   }
