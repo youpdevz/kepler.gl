@@ -23,7 +23,7 @@ import {text as requestText, json as requestJson} from 'd3-request';
 import {toggleModal} from 'kepler.gl/actions';
 import {console as Console} from 'global/window';
 import {MAP_CONFIG_URL} from './constants/sample-maps';
-import {shareFile, uploadFile} from './utils/utils';
+import {shareFile, uploadFile} from './utils/auth-token';
 
 // CONSTANTS
 export const INIT = 'INIT';
@@ -77,19 +77,17 @@ export function exportFileToCloud(data, handlerName = 'dropbox') {
     uploadFile(file)
       // need to perform share as well
       .then(metadata => {
-        console.log('Upload success', metadata);
         dispatch(setPushingFile(true, {filename: file.name, status: 'sharing', metadata}));
         // once we save we need to to share the file in order to retrieve the sharing url
         return shareFile(metadata);
       })
       .then(
         response => {
-          console.log('sharing completed', response);
+          dispatch(push(`/map?mapUrl=${response.url}`));
           dispatch(setPushingFile(false, {filename: file.name, status: 'success', metadata: response}));
         },
         error => {
           dispatch(setPushingFile(false, {filename: file.name, status: 'error', error}));
-          console.log('Upload error', error);
         }
       )
   };

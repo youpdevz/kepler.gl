@@ -26,6 +26,13 @@ export const ASSETS_URL = 'https://d1a3f4spazzrp4.cloudfront.net/kepler.gl/';
 
 export const DATA_URL = 'https://raw.githubusercontent.com/uber-web/kepler.gl-data/master/';
 
+/**
+ * I know this is already defined in Kepler core but it should be defined here
+ * because it belongs to the demo app
+ * @type {string}
+ */
+export const KEPLER_GL_WEBSITE = 'http://kepler.gl/';
+
 export const QUERY_TYPES = keyMirror({
   file: null,
   sample: null
